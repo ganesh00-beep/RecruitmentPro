@@ -7,7 +7,9 @@ interface Testimonial {
   author: {
     name: string;
     title: string;
+    image?: string;
   };
+  company?: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -18,7 +20,8 @@ const testimonials: Testimonial[] = [
     author: {
       name: "Sarah Johnson",
       title: "CEO, TechStart Inc."
-    }
+    },
+    company: "TechStart"
   },
   {
     rating: 5.0,
@@ -27,7 +30,8 @@ const testimonials: Testimonial[] = [
     author: {
       name: "Michael Chen",
       title: "Product Manager, InnovateCorp"
-    }
+    },
+    company: "InnovateCorp"
   },
   {
     rating: 4.5,
@@ -36,7 +40,8 @@ const testimonials: Testimonial[] = [
     author: {
       name: "Emily Rodriguez",
       title: "HR Director, Global Solutions Ltd."
-    }
+    },
+    company: "Global Solutions"
   }
 ];
 
@@ -44,52 +49,124 @@ const Testimonials = () => {
   const [activePage, setActivePage] = useState(0);
 
   return (
-    <section className="bg-white py-16">
+    <section className="bg-gradient-to-b from-white to-blue-50 py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-dark">What Our Clients Say</h2>
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Success stories from employers and job seekers who found their perfect match.</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16">
+          <div className="max-w-2xl mb-8 md:mb-0">
+            <div className="flex items-center mb-4">
+              <div className="h-0.5 w-12 bg-primary mr-4"></div>
+              <span className="text-primary font-medium">Testimonials</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              What Our Clients Say
+            </h2>
+            <p className="text-gray-600 max-w-xl">
+              Success stories from employers and job seekers who found their perfect match with Recroot.
+            </p>
+          </div>
+          <div className="flex space-x-3">
+            <button 
+              onClick={() => {
+                const newPage = activePage === 0 ? testimonials.length - 1 : activePage - 1;
+                setActivePage(newPage);
+              }}
+              className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-blue-50 hover:text-primary transition-colors"
+              aria-label="Previous testimonial"
+            >
+              <i className="fas fa-arrow-left"></i>
+            </button>
+            <button 
+              onClick={() => {
+                const newPage = activePage === testimonials.length - 1 ? 0 : activePage + 1;
+                setActivePage(newPage);
+              }}
+              className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center hover:bg-blue-600 transition-colors"
+              aria-label="Next testimonial"
+            >
+              <i className="fas fa-arrow-right"></i>
+            </button>
+          </div>
         </div>
         
-        <div className="relative">
-          <div className="testimonial-slider flex overflow-x-auto pb-8 -mx-4 px-4 space-x-4 hide-scrollbar">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="testimonial-slide flex-shrink-0 w-full md:w-1/2 lg:w-1/3 p-6 bg-white border border-gray-100 rounded-lg shadow-sm">
-                <div className="flex items-center mb-4">
-                  <div className="text-yellow-400 flex">
-                    {[...Array(Math.floor(testimonial.rating))].map((_, i) => (
-                      <i key={i} className="fas fa-star"></i>
-                    ))}
-                    {testimonial.rating % 1 > 0 && (
-                      <i className="fas fa-star-half-alt"></i>
-                    )}
-                  </div>
-                  <span className="ml-2 text-sm text-gray-600">{testimonial.ratingText}</span>
+        <div className="grid md:grid-cols-6 gap-8">
+          {/* Featured testimonial */}
+          <div className="col-span-full md:col-span-4">
+            <div className="bg-white p-8 md:p-10 rounded-2xl shadow-md border border-gray-100">
+              <div className="flex mb-6">
+                <div className="text-yellow-400 flex">
+                  {[...Array(Math.floor(testimonials[activePage].rating))].map((_, i) => (
+                    <i key={i} className="fas fa-star text-lg"></i>
+                  ))}
+                  {testimonials[activePage].rating % 1 > 0 && (
+                    <i className="fas fa-star-half-alt text-lg"></i>
+                  )}
                 </div>
-                <p className="text-gray-600 mb-6">{testimonial.content}</p>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                    <span className="text-gray-600 text-xs">{testimonial.author.name.charAt(0)}</span>
-                  </div>
-                  <div className="ml-3">
-                    <p className="font-medium text-dark">{testimonial.author.name}</p>
-                    <p className="text-sm text-gray-500">{testimonial.author.title}</p>
-                  </div>
-                </div>
+                <span className="ml-2 text-gray-600 font-medium">{testimonials[activePage].ratingText}</span>
               </div>
-            ))}
+              <blockquote className="text-xl md:text-2xl text-gray-800 font-medium mb-8 leading-relaxed relative">
+                <i className="fas fa-quote-left absolute -top-5 -left-2 text-blue-100 text-4xl opacity-50"></i>
+                <p className="relative z-10">{testimonials[activePage].content}</p>
+              </blockquote>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold text-xl">
+                    {testimonials[activePage].author.name.charAt(0)}
+                  </div>
+                  <div className="ml-4">
+                    <p className="font-bold text-gray-900">{testimonials[activePage].author.name}</p>
+                    <p className="text-gray-600">{testimonials[activePage].author.title}</p>
+                  </div>
+                </div>
+                {testimonials[activePage].company && (
+                  <div className="bg-blue-50 text-primary px-4 py-2 rounded-lg font-medium">
+                    {testimonials[activePage].company}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           
-          <div className="flex justify-center mt-6 space-x-2">
-            {testimonials.map((_, index) => (
-              <button 
-                key={index} 
-                className={`w-3 h-3 rounded-full ${index === activePage ? 'bg-primary' : 'bg-gray-300'}`}
-                aria-label={`Page ${index + 1}`}
-                onClick={() => setActivePage(index)}
-              ></button>
-            ))}
+          {/* Stats and highlight */}
+          <div className="col-span-full md:col-span-2 grid grid-cols-1 gap-8">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 text-white">
+              <h3 className="text-2xl font-bold mb-6">Trusted by thousands</h3>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-4xl font-bold mb-1">98%</p>
+                  <p className="text-blue-100">Success rate</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-bold mb-1">10k+</p>
+                  <p className="text-blue-100">Happy clients</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-bold mb-1">4.9/5</p>
+                  <p className="text-blue-100">Average rating</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="hidden md:block bg-blue-50 rounded-2xl p-6">
+              <div className="flex justify-center mb-4">
+                <i className="fas fa-shield-alt text-4xl text-primary"></i>
+              </div>
+              <h3 className="text-center text-lg font-bold mb-2">Satisfaction Guaranteed</h3>
+              <p className="text-center text-gray-600 text-sm">
+                We're committed to finding the right match or your money back.
+              </p>
+            </div>
           </div>
+        </div>
+        
+        <div className="flex justify-center mt-8 space-x-2">
+          {testimonials.map((_, index) => (
+            <button 
+              key={index} 
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === activePage ? 'bg-primary w-6' : 'bg-gray-300'}`}
+              aria-label={`Page ${index + 1}`}
+              onClick={() => setActivePage(index)}
+            ></button>
+          ))}
         </div>
       </div>
     </section>
