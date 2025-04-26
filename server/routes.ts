@@ -1,9 +1,36 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertUserSchema } from "@shared/schema";
+import { ZodError } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for the recruitment platform
+  
+  // User management endpoints
+  app.post("/api/users", async (req: Request, res: Response) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const newUser = await storage.createUser(userData);
+      
+      // Don't return the password in the response
+      const { password, ...userWithoutPassword } = newUser;
+      
+      res.status(201).json({
+        message: "User created successfully",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
   
   // Get services
   app.get("/api/services", (req, res) => {
@@ -134,38 +161,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // Authentication endpoints (for future implementation)
-  app.post("/api/auth/register", (req, res) => {
-    const { fullName, email, password, userType } = req.body;
-    
-    // Simple validation
-    if (!fullName || !email || !password || !userType) {
-      return res.status(400).json({ message: "Please fill all required fields" });
+  // Authentication endpoints
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      // Validation using Zod schema
+      const userData = insertUserSchema.parse({ username, password });
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      // In a real application, we would hash the password here
+      const newUser = await storage.createUser(userData);
+      
+      // Don't return the password in the response
+      const { password: _, ...userWithoutPassword } = newUser;
+      
+      res.status(201).json({ 
+        message: "Registration successful! You can now log in.",
+        success: true,
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid registration data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Registration failed" });
     }
-    
-    // Here would be user registration logic with proper password hashing
-    
-    res.status(200).json({ 
-      message: "Registration successful! You can now log in.",
-      success: true
-    });
   });
   
-  app.post("/api/auth/login", (req, res) => {
-    const { email, password } = req.body;
+  app.post("/api/auth/login", async (req, res) => {
+    const { username, password } = req.body;
     
     // Simple validation
-    if (!email || !password) {
-      return res.status(400).json({ message: "Please provide email and password" });
+    if (!username || !password) {
+      return res.status(400).json({ message: "Please provide username and password" });
     }
     
-    // Here would be authentication logic
-    
-    res.status(200).json({ 
-      message: "Login successful!",
-      success: true,
-      token: "sample-token-for-future-implementation"
-    });
+    try {
+      // Look up the user in the database
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // In a real app, we would use bcrypt to compare the hashed password
+      if (user.password !== password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Don't return the password in the response
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.status(200).json({ 
+        message: "Login successful!",
+        success: true,
+        user: userWithoutPassword,
+        token: "sample-token-for-future-implementation"
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "An error occurred during login" });
+    }
   });
 
   const httpServer = createServer(app);
