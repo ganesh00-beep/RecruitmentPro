@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
+import { isAuthenticated } from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for the recruitment platform
@@ -235,6 +236,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "An error occurred during login" });
+    }
+  });
+  
+  // Logout endpoint
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+        return res.status(500).json({ message: "Error logging out" });
+      }
+      
+      res.status(200).json({ 
+        message: "Logout successful",
+        success: true
+      });
+    });
+  });
+  
+  // Get current user profile (requires authentication)
+  app.get("/api/profile", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = await storage.getUser(req.session.userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't return the password in the response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.status(200).json({
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Error fetching profile" });
     }
   });
 

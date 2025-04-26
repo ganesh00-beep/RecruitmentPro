@@ -10,20 +10,6 @@ declare module 'express-session' {
   }
 }
 
-// Extend Express Request type to include session
-declare global {
-  namespace Express {
-    interface Request {
-      session: {
-        userId?: number;
-        username?: string;
-        isAuthenticated?: boolean;
-        [key: string]: any;
-      };
-    }
-  }
-}
-
 // Authentication middleware
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   if (req.session && req.session.isAuthenticated) {
