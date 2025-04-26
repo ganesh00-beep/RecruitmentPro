@@ -219,14 +219,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
+      // Set up session
+      req.session.userId = user.id;
+      req.session.username = user.username;
+      req.session.isAuthenticated = true;
+      
       // Don't return the password in the response
       const { password: _, ...userWithoutPassword } = user;
       
       res.status(200).json({ 
         message: "Login successful!",
         success: true,
-        user: userWithoutPassword,
-        token: "sample-token-for-future-implementation"
+        user: userWithoutPassword
       });
     } catch (error) {
       console.error("Login error:", error);
