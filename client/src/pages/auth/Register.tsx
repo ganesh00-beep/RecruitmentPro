@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,19 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const [userType, setUserType] = useState("job-seeker");
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { register, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [_, navigate] = useLocation();
   
   useEffect(() => {
     // Add Font Awesome CDN dynamically
@@ -31,10 +37,51 @@ const Register = () => {
     };
   }, []);
   
-  const handleRegister = (e: React.FormEvent) => {
+  // If user is already authenticated, redirect to home page
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
+  
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here would be the actual registration logic
-    console.log({ userType, fullName, email, password, agreeTerms });
+    
+    if (!username || !password) {
+      toast({
+        title: "Error",
+        description: "Please provide a username and password",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!agreeTerms) {
+      toast({
+        title: "Error",
+        description: "You must agree to the Terms of Service and Privacy Policy",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      await register(username, password);
+      
+      toast({
+        title: "Registration successful",
+        description: "Your account has been created. You can now log in.",
+      });
+      
+      // Redirect to login page
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration error:", error);
+      // Error handling is done in the register function in AuthContext
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -89,13 +136,13 @@ const Register = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="your@email.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username" 
+                    type="text" 
+                    placeholder="Choose a username" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
@@ -133,7 +180,13 @@ const Register = () => {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full mt-6">Create account</Button>
+              <Button 
+                type="submit" 
+                className="w-full mt-6"
+                disabled={isLoading}
+              >
+                {isLoading ? "Creating account..." : "Create account"}
+              </Button>
               
               <div className="mt-6">
                 <div className="relative">

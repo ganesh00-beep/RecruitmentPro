@@ -10,9 +10,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [_, navigate] = useLocation();
   
   useEffect(() => {
     // Add Font Awesome CDN dynamically
@@ -30,10 +34,34 @@ const Login = () => {
     };
   }, []);
   
-  const handleLogin = (e: React.FormEvent) => {
+  // If user is already authenticated, redirect to home page
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
+  
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here would be the actual login logic
-    console.log({ email, password, rememberMe });
+    if (!username || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter your username and password",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      await login(username, password);
+      // Navigation is handled by the effect hook above
+    } catch (error) {
+      console.error("Login error:", error);
+      // Error handling is done in the login function in AuthContext
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -54,13 +82,13 @@ const Login = () => {
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="your@email.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username" 
+                    type="text" 
+                    placeholder="Enter your username" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
@@ -92,7 +120,13 @@ const Login = () => {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full mt-6">Sign in</Button>
+              <Button 
+                type="submit" 
+                className="w-full mt-6" 
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign in"}
+              </Button>
               
               <div className="mt-6">
                 <div className="relative">
