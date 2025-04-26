@@ -88,12 +88,36 @@ const Header = () => {
           </nav>
           
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/login" className="text-dark hover:text-primary font-medium">
-              Login
-            </Link>
-            <Link href="/register" className="bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-opacity-90 transition">
-              Register
-            </Link>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-1">
+                    <span className="font-medium">{user?.username || 'User'}</span>
+                    <i className="fas fa-chevron-down text-xs"></i>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Link href="/profile" className="w-full">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/dashboard" className="w-full">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link href="/login" className="text-dark hover:text-primary font-medium">
+                  Login
+                </Link>
+                <Link href="/register" className="bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-opacity-90 transition">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
           
           {/* Mobile menu button */}
